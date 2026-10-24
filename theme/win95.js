@@ -30,7 +30,7 @@
     (themeScript && themeScript.src) || window.location.href,
   );
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
 
   const DEFAULTS = {
     boot: true,
@@ -48,6 +48,7 @@
     docFooter: true,
     clock24: false,
     wallpaper: '',
+    icons: {},
     desktop: null,
     apps: [],
     startMenu: null,
@@ -100,6 +101,7 @@
     lastDocPos: null,
     explorerRect: null,
     viewMode: 'icons',
+    treeWidth: 200,
     expanded: new Set(),
   };
 
@@ -126,6 +128,9 @@
       return state.icons[name];
     }
     if (/^(https?:|data:|\/|\.)/i.test(name)) {
+      return name;
+    }
+    if (name.includes('/')) {
       return name;
     }
     if (/\.[a-z0-9]+$/i.test(name)) {
@@ -382,11 +387,22 @@
         if (/^mailto:/i.test(href) || /^tel:/i.test(href)) {
           continue;
         }
+        const iconClass = Array.from(link.classList || []).find(className =>
+          className.startsWith('w95-icon-'),
+        );
+        const iconKey = iconClass
+          ? iconClass.slice('w95-icon-'.length)
+          : '';
+        const icon =
+          iconKey && state.opts.icons
+            ? state.opts.icons[iconKey] || ''
+            : '';
         result.push({
           type: 'file',
           label,
           href,
           app: isAppHref(href, link),
+          icon,
         });
         continue;
       }
@@ -458,6 +474,7 @@
       appUrl: app ? hrefToAppUrl(item.href) : '',
       pathKey: app ? '' : canonicalPath(item.href),
       anchorId,
+      icon: item.icon || '',
       displayPath: '',
     };
   }
@@ -542,7 +559,7 @@
             state.apps.push({
               title: node.name,
               url: node.appUrl,
-              icon: 'exe',
+              icon: node.icon || 'exe',
             });
           }
         } else if (node.pathKey && !state.fileByPath.has(node.pathKey)) {
@@ -561,7 +578,7 @@
       const url = configAppUrl(app.url);
       const existing = state.apps.find(item => item.url === url);
       if (existing) {
-        if (app.icon) {
+        if (app.icon && (!existing.icon || existing.icon === 'exe')) {
           existing.icon = app.icon;
         }
         if (app.width) {
@@ -876,7 +893,7 @@
         title: state.apps[0].title.endsWith('.exe')
           ? state.apps[0].title
           : `${state.apps[0].title}.exe`,
-        icon: 'exe',
+        icon: state.apps[0].icon || 'exe',
         action: 'app',
         url: state.apps[0].url,
         width: state.apps[0].width,
@@ -941,6 +958,33 @@
     }
   }
 
+  function desktopIconFor(item) {
+    if (item.icon) {
+      return item.icon;
+    }
+    if (item.action === 'app') {
+      const url = configAppUrl(item.url);
+      const app = state.apps.find(entry => entry.url === url);
+      return (app && app.icon) || 'exe';
+    }
+    if (item.action === 'explorer') {
+      return 'computer';
+    }
+    if (item.action === 'recycle') {
+      return 'recycle';
+    }
+    if (item.action === 'run') {
+      return 'run';
+    }
+    if (item.action === 'shutdown') {
+      return 'shutdown';
+    }
+    if (item.action === 'about') {
+      return 'help';
+    }
+    return 'file';
+  }
+
   function renderDesktopIcons() {
     const host = document.getElementById('w95-icons');
     if (!host) {
@@ -960,7 +1004,7 @@
       button.type = 'button';
       button.title = item.title || '';
       button.innerHTML = `<img class="w95-icon-32" src="${esc(
-        iconUrl(item.icon || 'file'),
+        iconUrl(desktopIconFor(item)),
       )}" alt=""><span class="w95-label">${esc(item.title || '')}</span>`;
       button.addEventListener('click', () => {
         host
@@ -1037,7 +1081,7 @@
       const button = el('button', 'w95-start-item');
       button.type = 'button';
       button.innerHTML = `<img src="${esc(
-        iconUrl(item.icon || 'file'),
+        iconUrl(item.icon || desktopIconFor(item)),
       )}" alt=""><span>${esc(item.title || '')}</span>`;
       button.addEventListener('click', () => startAction(item));
       host.appendChild(button);
@@ -1230,6 +1274,7 @@
 
     const addressText = el('div', 'w95-address');
     const treePane = el('div', 'w95-tree-pane');
+    const splitter = el('div', 'w95-splitter');
     const filePane = el('div', 'w95-file-pane');
     const statusLeft = el('span', 'w95-status-cell', '');
     const statusRight = el('span', 'w95-status-cell', '');
@@ -1237,6 +1282,20 @@
     const btnForward = makeToolButton('Forward', 'right.png');
     const btnUp = makeToolButton('Up', 'up.png');
     const btnViews = makeToolButton('Views', 'views.svg');
+
+    let treeWidth = clamp(Number(state.treeWidth) || 200, 110, 640);
+    if (window.innerWidth < 760) {
+      treeWidth = Math.min(treeWidth, 150);
+    }
+    treePane.style.flexBasis = `${treeWidth}px`;
+    splitter.tabIndex = 0;
+    splitter.setAttribute('role', 'separator');
+    splitter.setAttribute('aria-orientation', 'vertical');
+    splitter.setAttribute('aria-label', 'Resize folder tree');
+    splitter.setAttribute('aria-valuemin', '110');
+    splitter.setAttribute('aria-valuemax', '640');
+    splitter.setAttribute('aria-valuenow', String(treeWidth));
+    splitter.title = 'Drag to resize';
 
     function updateToolbar() {
       btnBack.disabled = navIndex <= 0;
@@ -1314,7 +1373,7 @@
         openApp({
           title: node.name,
           url: node.appUrl,
-          icon: 'exe',
+          icon: node.icon || undefined,
         });
       } else {
         openDoc(node);
@@ -1630,7 +1689,66 @@
 
     const main = el('div', 'w95-explorer-main');
     main.appendChild(treePane);
+    main.appendChild(splitter);
     main.appendChild(filePane);
+
+    function setTreeWidth(width) {
+      const max = Math.max(110, main.clientWidth - 147);
+      treeWidth = clamp(Math.round(width), 110, Math.min(640, max));
+      treePane.style.flexBasis = `${treeWidth}px`;
+      state.treeWidth = treeWidth;
+      splitter.setAttribute('aria-valuenow', String(treeWidth));
+    }
+
+    splitter.addEventListener('pointerdown', event => {
+      if (event.button !== undefined && event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      win.focus();
+      const startX = event.clientX;
+      const startWidth = treePane.getBoundingClientRect().width;
+      const pointerId = event.pointerId;
+      document.body.classList.add('w95-col-resizing');
+
+      try {
+        splitter.setPointerCapture(pointerId);
+      } catch {
+        // ignore
+      }
+
+      const onMove = moveEvent => {
+        setTreeWidth(startWidth + moveEvent.clientX - startX);
+      };
+      const stop = () => {
+        document.body.classList.remove('w95-col-resizing');
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', stop);
+        document.removeEventListener('pointercancel', stop);
+        try {
+          splitter.releasePointerCapture(pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', stop);
+      document.addEventListener('pointercancel', stop);
+    });
+
+    splitter.addEventListener('dblclick', event => {
+      event.preventDefault();
+      setTreeWidth(200);
+    });
+
+    splitter.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+        return;
+      }
+      event.preventDefault();
+      setTreeWidth(treeWidth + (event.key === 'ArrowRight' ? 16 : -16));
+    });
 
     const status = el('div', 'w95-statusbar');
     status.appendChild(statusLeft);
@@ -1672,8 +1790,14 @@
     if (node.type === 'folder') {
       return state.icons.folder;
     }
+    if (node.icon) {
+      return iconUrl(node.icon);
+    }
     if (node.kind === 'app') {
-      return state.icons.exe;
+      const app = state.apps.find(
+        item => item.url && item.url === node.appUrl,
+      );
+      return iconUrl((app && app.icon) || 'exe');
     }
     return state.icons.file;
   }
@@ -1816,7 +1940,7 @@
         minheight: 220,
         winbox: {
           title: item.fileName || item.name || 'Document',
-          icon: state.icons.file,
+          icon: item.icon ? iconUrl(item.icon) : state.icons.file,
           width,
           height,
           x: rect.x,
@@ -1826,7 +1950,7 @@
       },
       {
         title: item.fileName || item.name || 'Document',
-        icon: state.icons.file,
+        icon: item.icon ? iconUrl(item.icon) : state.icons.file,
         kind: 'doc',
         onClose: () => {
           if (state.docWindows.get(item.pathKey) === win) {

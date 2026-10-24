@@ -26,9 +26,9 @@ python3 -m http.server 8080
 
 | 功能 | 说明 |
 | --- | --- |
-| 文件夹树 | 解析 `_sidebar.md` 的嵌套列表 |
+| 文件夹树 | 解析 `_sidebar.md` 的嵌套列表，分隔条可左右拖动 |
 | 文档窗口 | 每篇文档独立窗口，可同时打开多篇 |
-| 程序窗口 | iframe 嵌入网页或本地 HTML 小应用 |
+| 程序窗口 | iframe 嵌入网页或本地 HTML 小应用，支持自定义图标 |
 | 任务栏 | 窗口按钮、最小化、时钟 |
 | 开始菜单 | My Computer、程序、Run、Shut Down、About |
 | 桌面图标 | 可配置 |
@@ -90,6 +90,63 @@ win95: {
 }
 ```
 
+## 自定义程序图标
+
+程序图标会用于资源管理器、窗口标题栏、任务栏、开始菜单和桌面快捷方式。
+
+**侧边栏类名 + `icons` 映射：**
+
+```md
+- [记事本](apps/notepad.html ':class=w95-icon-notepad')
+- [Jupyter](https://jupyter.org ':class=w95-icon-jupyter')
+```
+
+```js
+win95: {
+  icons: {
+    notepad: 'notepad.svg',
+    jupyter: './icons/jupyter.png',
+  },
+}
+```
+
+**或者直接在 `apps` 里指定：**
+
+```js
+win95: {
+  apps: [
+    { url: 'https://jupyter.org', icon: './icons/jupyter.png' },
+  ],
+}
+```
+
+图标路径：
+
+- `notepad.svg` → `theme/assets/icons/notepad.svg`
+- `./icons/jupyter.png` → 相对于 `index.html`
+- `/icons/jupyter.png` → 站点根目录
+- `https://...` → 远程图片
+
+## 自定义桌面图标
+
+```js
+win95: {
+  desktop: [
+    { title: 'My Computer', icon: 'computer', action: 'explorer' },
+    { title: 'README.md', icon: 'file', action: 'doc', pathKey: '/' },
+    {
+      title: 'Notepad.exe',
+      icon: 'notepad.svg',
+      action: 'app',
+      url: 'docs/apps/notepad.html',
+    },
+    { title: 'Recycle Bin', icon: 'recycle', action: 'recycle' },
+  ],
+}
+```
+
+完整的 `action` 列表和桌面图标配置见 [主题选项](docs/guide/options.md)。
+
 ## 选项
 
 完整选项见演示站里的 `主题选项` 页面，或直接看 `theme/win95.js` 顶部的 `DEFAULTS`。
@@ -106,6 +163,7 @@ win95: {
   docFooter: true,
   clock24: false,
   wallpaper: '',
+  icons: { /* 自定义图标映射 */ },
   desktop: [ /* ... */ ],
   apps: [ /* ... */ ],
   startMenu: [ /* ... */ ],

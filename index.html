@@ -38,6 +38,10 @@
           drive: 'C:',
           rootName: 'My Computer',
           startBanner: 'Windows 95',
+          icons: {
+            notepad: 'notepad.svg',
+            browser: 'browser.svg',
+          },
           desktop: [
             {
               title: 'My Computer',
@@ -52,7 +56,7 @@
             },
             {
               title: 'Notepad.exe',
-              icon: 'exe',
+              icon: 'notepad.svg',
               action: 'app',
               url: 'docs/apps/notepad.html',
               width: 620,
@@ -60,7 +64,7 @@
             },
             {
               title: 'Example.com',
-              icon: 'exe',
+              icon: 'browser.svg',
               action: 'app',
               url: 'https://example.com',
             },
@@ -74,16 +78,19 @@
             {
               title: 'Notepad',
               url: 'docs/apps/notepad.html',
+              icon: 'notepad.svg',
               width: 620,
               height: 460,
             },
             {
               title: 'Example.com',
               url: 'https://example.com',
+              icon: 'browser.svg',
             },
             {
               title: 'Docsify',
               url: 'https://docsify.js.org',
+              icon: 'browser.svg',
             },
           ],
         },

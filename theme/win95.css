@@ -829,12 +829,55 @@ body.w95-mode a {
 .w95-tree-pane {
   flex: 0 0 200px;
   min-width: 110px;
-  max-width: 48%;
+  max-width: calc(100% - 147px);
   overflow: auto;
   background: #fff;
   border: 2px solid;
   border-color: #808080 #fff #fff #808080;
   padding: 3px 2px;
+}
+
+.w95-splitter {
+  flex: 0 0 7px;
+  position: relative;
+  z-index: 2;
+  cursor: col-resize;
+  touch-action: none;
+  background: var(--w95-gray);
+  border-left: 1px solid #fff;
+  border-right: 1px solid #808080;
+}
+
+.w95-splitter::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 3px;
+  height: 32px;
+  margin-top: -16px;
+  background-image: linear-gradient(#808080 50%, transparent 50%);
+  background-size: 3px 6px;
+  opacity: 0.8;
+}
+
+.w95-splitter:hover,
+.w95-splitter:focus-visible {
+  background: #d0d0d0;
+}
+
+.w95-splitter:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -2px;
+}
+
+body.w95-col-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.w95-col-resizing iframe {
+  pointer-events: none !important;
 }
 
 .w95-tree-pane::-webkit-scrollbar {
@@ -907,7 +950,6 @@ body.w95-mode a {
 .w95-file-pane {
   flex: 1 1 auto;
   min-width: 0;
-  margin-left: 2px;
   overflow: auto;
   background: #fff;
   border: 2px solid;
@@ -916,7 +958,7 @@ body.w95-mode a {
 
 .w95-file-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
   align-content: start;
   gap: 2px;
   padding: 8px;
@@ -942,7 +984,8 @@ body.w95-mode a {
 }
 
 .w95-file-card .w95-file-name {
-  max-width: 86px;
+  width: 100%;
+  max-width: 100%;
   padding: 0 2px;
   line-height: 1.2;
   word-break: break-word;
@@ -1822,10 +1865,6 @@ body.w95-mode .w95-dialog-buttons .w95-btn {
 @media (max-width: 760px) {
   :root {
     --w95-taskbar: 28px;
-  }
-
-  .w95-tree-pane {
-    flex-basis: 132px;
   }
 
   .w95-tree-toggle {

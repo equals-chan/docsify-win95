@@ -45,6 +45,7 @@ window.$docsify = {
 | `externalLinks` | `'window' \| 'browser'` | `'window'` | 文档里的外部链接默认在 iframe 窗口打开，还是新标签页 |
 | `exeSuffix` | `Boolean` | `true` | 是否给程序文件自动加上 `.exe` 后缀 |
 | `apps` | `Array` | `[]` | 额外的程序列表，会出现在开始菜单 |
+| `icons` | `Object` | `{}` | 给侧边栏的 `w95-icon-*` 类名提供自定义图标 |
 
 `apps` 示例：
 
@@ -67,6 +68,73 @@ win95: {
 
 `url` 相对于 `index.html` 所在目录，也可以直接写绝对 URL。侧边栏里的程序链接则相对于 Docsify 的 `basePath`。
 
+### 自定义程序图标
+
+程序图标会在这些地方使用：
+
+- 资源管理器的文件列表 / 文件夹树
+- 程序窗口标题栏
+- 任务栏按钮
+- 开始菜单
+- 桌面快捷方式
+
+**方式一：在 `apps` 里指定**
+
+```js
+win95: {
+  apps: [
+    {
+      title: 'Jupyter',
+      url: 'https://jupyter.org',
+      icon: './icons/jupyter.png',
+    },
+  ],
+}
+```
+
+如果侧边栏已经有这个程序，只写 `{ url, icon }` 也会自动合并，不需要重复标题：
+
+```js
+win95: {
+  apps: [
+    { url: 'https://jupyter.org', icon: './icons/jupyter.png' },
+  ],
+}
+```
+
+**方式二：侧边栏类名 + `icons` 映射**
+
+```md
+- [记事本](apps/notepad.html ':class=w95-icon-notepad')
+- [Jupyter](https://jupyter.org ':class=w95-icon-jupyter')
+```
+
+```js
+win95: {
+  icons: {
+    notepad: 'notepad.svg',
+    jupyter: './icons/jupyter.png',
+  },
+}
+```
+
+- `.html` 和外部链接会自动识别为程序
+- 其他路径想强制当程序打开时，再叠加一个 `:class=w95-exe`
+- 类名可以叠加：`:class=w95-exe :class=w95-icon-jupyter`
+
+### 图标路径规则
+
+| 写法 | 解析方式 |
+| --- | --- |
+| `computer` / `file` / `exe` / `recycle` / `run` / `shutdown` / `help` | 内置图标 |
+| `notepad.svg` | `theme/assets/icons/notepad.svg` |
+| `./icons/jupyter.png` | 相对于 `index.html` |
+| `../assets/foo.ico` | 相对于 `index.html` |
+| `/icons/jupyter.png` | 站点根目录 |
+| `https://example.com/icon.png` | 远程图片 |
+
+不写 `icon` 时使用默认的 `.exe` 图标。
+
 ## 桌面图标
 
 不配置时，桌面会自动生成：`My Computer`、第一篇文章、第一个程序、`Recycle Bin`。
@@ -76,19 +144,30 @@ win95: {
   desktop: [
     { title: 'My Computer', icon: 'computer', action: 'explorer' },
     { title: 'README.md', icon: 'file', action: 'doc', pathKey: '/' },
-    { title: 'Notepad.exe', icon: 'exe', action: 'app', url: 'docs/apps/notepad.html' },
+    {
+      title: 'Notepad.exe',
+      icon: 'notepad.svg',
+      action: 'app',
+      url: 'docs/apps/notepad.html',
+    },
+    { title: 'Jupyter', icon: './icons/jupyter.png', action: 'app', url: 'https://jupyter.org' },
     { title: 'Recycle Bin', icon: 'recycle', action: 'recycle' },
     { title: 'Shut Down', icon: 'shutdown', action: 'shutdown' },
   ],
 }
 ```
 
+- `icon` 可以省略：`app` 会自动使用 `apps` 里同 URL 的图标，`explorer` / `recycle` / `run` / `shutdown` 也有默认图标
+- 图标路径规则与上面的 [自定义程序图标](#自定义程序图标) 相同
+- 想让某个文档显示自定义图标，给 `doc` 项加 `icon`
+- `onClick()` 可以直接接管点击行为
+
 支持的 `action`：
 
 | action | 说明 |
 | --- | --- |
 | `explorer` | 打开资源管理器 |
-| `doc` | 打开文档，使用 `pathKey` 或 `href` |
+| `doc` | 打开文档，使用 `pathKey`、`path` 或 `href` |
 | `app` | 打开 iframe 程序，使用 `url` |
 | `helpdoc` | 打开第一篇文章（Documentation） |
 | `run` | 打开 Run 对话框 |
@@ -96,7 +175,7 @@ win95: {
 | `recycle` | 打开回收站 |
 | `shutdown` | 打开关机对话框 |
 
-也可以直接传 `onClick() {}` 自定义行为。
+也可以直接传 `onClick() {}` 自定义行为。桌面图标同样支持 `icon`，包括自定义图片。
 
 ## 开始菜单
 

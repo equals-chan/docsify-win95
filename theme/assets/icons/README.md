@@ -16,7 +16,7 @@ Files copied from that theme:
 - `favicon.ico`
 
 The SVG icons (`exe.svg`, `recycle.svg`, `help.svg`, `shutdown.svg`, `run.svg`,
-`views.svg`) were drawn for this project.
+`views.svg`, `notepad.svg`, `browser.svg`) were drawn for this project.
 
 If you redistribute the theme, check the original Typecho theme's license and
 replace these bitmaps with your own if necessary. They are ordinary 16×16
